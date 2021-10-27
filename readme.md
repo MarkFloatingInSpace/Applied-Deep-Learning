@@ -1,7 +1,7 @@
 # "TrackMania 2020" Bot Using a Combination of Supervised Regression and Reinforcement Learning in a Deep CNN
 
 ## Description
-TrackMania 2020 is a free-to-play racing game video game where players compete on different tracks to obtain the fastet times. A map editor is available for subscription-paying users. 
+TrackMania 2020 is a free-to-play racing video game in which players compete on different tracks to obtain the fastet time. A map editor is available for subscription-paying users. 
 
 The goal of this project is to build and train a deep convolutional neural network in order to drive on specially created maps. The project is done in the context of the "Applied Deep Learning" university course of TU Wien, falling under the **"Bring your own Method"** type of project within the course.
 
