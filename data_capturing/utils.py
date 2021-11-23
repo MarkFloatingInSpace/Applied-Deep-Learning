@@ -1,4 +1,3 @@
-import win32gui
 from inputs import get_gamepad
 import math
 import threading
@@ -8,6 +7,8 @@ import win32gui, win32ui, win32con
 import numpy as np
 import cv2
 from PIL import Image
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class XboxController(object):
@@ -157,7 +158,7 @@ class WindowCapture:
             img = np.fromstring(signedIntsArray, dtype='uint8')
             img.shape = (self.h, self.w, 4)
             img = img[::2, ::2, :3]
-            cv2.imwrite("{}/screenshots{}.bmp".format(self.replay_path, self.capture_counter), img)
+            cv2.imwrite("{}/screenshots{}.png".format(self.replay_path, self.capture_counter), img)
 
         self.capture_counter += 1
 
@@ -183,7 +184,6 @@ def postprocessing_bmp_screenshots(path):
             resized_im.save(os.path.join(path, filename.split(".")[0] + ".png"))
 
 
-
 def create_replay_dir(base_path, track_name, player_name):
     if not os.path.isdir(os.path.join(base_path, track_name)):
         os.mkdir(os.path.join(base_path, track_name))
@@ -206,6 +206,69 @@ def create_replay_dir(base_path, track_name, player_name):
     os.mkdir(run_path)
 
     return run_path
+
+
+def bmp_2_compressed_batch(path, format="png"):
+    if os.path.isdir(path):
+        file_list = list(os.listdir(path))
+        for idx, filename in enumerate(file_list):
+            if filename.endswith(".bmp"):
+                img = Image.open(os.path.join(path, filename))
+                new_file_name = filename.split(".")[0] + "." + format
+                img.save(os.path.join(path, new_file_name), format)
+
+                os.remove(os.path.join(path, filename))
+
+            if (idx * 10) % len(file_list) == 0:
+                print(f"{idx * 100 / len(file_list)}%")
+    else:
+        img = Image.open(path)
+        new_file_name = os.path.basename(path).split(".")[0] + "." + format
+        img.save(os.path.join(path, new_file_name), format)
+        os.remove(path)
+
+
+def bmp_2_compressed_batch_subfolders(path):
+    subdirs = [x[0] for x in os.walk(path)]
+    for subdir in subdirs:
+        files = os.walk(subdir).__next__()[2]
+        if (len(files) > 0):
+            print(subdir)
+            bmp_2_compressed_batch(subdir)
+
+def rescale_img(path, size):
+    if path.endswidth(""):
+    img.resize(newsize)
+
+
+def plot_fps_stats(path):
+    inputs_df = pd.read_csv(os.path.join(path, "inputs.txt"), delimiter="\t", names=("frame_number", "time_1", "time_2",
+                                                                                     "time_3", "steering",
+                                                                                     "accelerator", "brake"))
+    inputs_df['dt_screenshot'] = inputs_df['time_2'] - inputs_df['time_1']
+    inputs_df['dt_inputs'] = inputs_df.loc[1:, "time_1"] - inputs_df.iloc[:-1]["time_2"]
+    inputs_df["dt"] = inputs_df["time_1"].diff()
+    inputs_df["fps"] = 1 / inputs_df["dt"]
+
+    plt.figure()
+    plt.hist(inputs_df["fps"], 50)
+
+    plt.figure()
+    plt.hist(inputs_df["dt_screenshot"], 50)
+
+    plt.figure()
+    plt.hist(inputs_df["dt_inputs"], 50, alpha=0.3)
+
+
+def plot_inputs(path):
+    inputs_df = pd.read_csv(os.path.join(path, "inputs.txt"), delimiter="\t", names=("frame_number", "time_1", "time_2",
+                                                                                     "time_3", "steering",
+                                                                                     "accelerator", "brake"))
+
+    plt.figure()
+    plt.plot(inputs_df["steering"])
+    plt.plot(inputs_df["accelerator"])
+    plt.plot(inputs_df["brake"])
 
 
 if __name__ == "__main__":
